@@ -47,6 +47,17 @@ def analyse_condition(name, data):
     ame_p = 2 * (1 - norm.cdf(abs(ame_z)))
     ame = {"dy/dx": ame_val, "Pr(>|z|)": ame_p}
 
+    # Optional sanity check: statsmodels' iterative MLE should reproduce the
+    # closed-form coefficient above exactly, since a single binary regressor
+    # makes this a saturated model. Not required to run the analysis; skipped
+    # automatically if statsmodels isn't installed (e.g. no internet access).
+    try:
+        import statsmodels.formula.api as smf
+        sm_coef = smf.logit("chose_target ~ treated", data=data).fit(disp=False).params["treated"]
+        print(f"[sanity check] statsmodels coef: {sm_coef:.4f}  (closed-form: {coef:.4f})")
+    except ImportError:
+        pass
+
     print(f"\n{'='*60}\n{name}  (n={len(data)})\n{'='*60}")
     print(f"Control group target-choice rate:   {control_rate:.1%}")
     print(f"Treatment group target-choice rate: {treatment_rate:.1%}")
